@@ -3,6 +3,7 @@ package dns
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/miekg/dns"
 
@@ -28,6 +29,10 @@ type Server struct {
 	// Internal state (to handle reconfiguration).
 	address string
 
+	// Internal state to handle restarts.
+	restart        chan struct{}
+	restartPending bool
+
 	mu sync.Mutex
 }
 
@@ -48,6 +53,10 @@ func (s *Server) Start(address string) error {
 }
 
 func (s *Server) start(address string) error {
+	if s.address != "" {
+		return nil
+	}
+
 	// Set default port if needed.
 	address = internalUtil.CanonicalNetworkAddress(address, ports.DNSDefaultPort)
 
@@ -61,6 +70,7 @@ func (s *Server) start(address string) error {
 		err := s.tcpDNS.ListenAndServe()
 		if err != nil {
 			logger.Errorf("Failed to bind TCP DNS address %q: %v", address, err)
+			s.restartFailed()
 		}
 	}()
 
@@ -69,8 +79,12 @@ func (s *Server) start(address string) error {
 		err := s.udpDNS.ListenAndServe()
 		if err != nil {
 			logger.Errorf("Failed to bind UDP DNS address %q: %v", address, err)
+			s.restartFailed()
 		}
 	}()
+
+	// Record the address.
+	s.address = address
 
 	// TSIG handling.
 	err := s.updateTSIG()
@@ -78,10 +92,60 @@ func (s *Server) start(address string) error {
 		return err
 	}
 
-	// Record the address.
-	s.address = address
-
 	return nil
+}
+
+func (s *Server) restartFailed() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.restartPending {
+		return
+	}
+
+	s.stop()
+
+	s.restart = make(chan struct{})
+	s.restartPending = true
+
+	go func() {
+		restartTimer := time.NewTimer(time.Second * 10)
+		select {
+		case <-restartTimer.C:
+			s.mu.Lock()
+			// If the restart was cancelled in the meantime then s.restart is closed and writing to it would panic.
+			if s.restartPending {
+				s.restart <- struct{}{}
+			}
+
+			s.mu.Unlock()
+		}
+	}()
+
+	cleanupTimer := time.NewTimer(time.Second * 20)
+
+	go func() {
+		select {
+		case <-s.restart:
+			s.mu.Lock()
+			var err error
+
+			// Only start if the restart was not cancelled.
+			if s.restartPending {
+				err = s.start(s.address)
+			}
+
+			s.mu.Unlock()
+
+			if err != nil {
+				logger.Errorf("Failed to start DNS server: %v", err)
+				s.restartFailed()
+			}
+
+		case <-cleanupTimer.C:
+			// Restart was cancelled before the select.
+		}
+	}()
 }
 
 // Stop tears down the DNS listener.
@@ -90,13 +154,20 @@ func (s *Server) Stop() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.stop()
+	if s.restart != nil {
+		close(s.restart)
+		s.restartPending = false
+	}
+
+	s.stop()
+
+	return nil
 }
 
-func (s *Server) stop() error {
+func (s *Server) stop() {
 	// Skip if no instance.
-	if s.tcpDNS == nil || s.udpDNS == nil {
-		return nil
+	if s.address == "" {
+		return
 	}
 
 	// Stop the listener.
@@ -105,7 +176,6 @@ func (s *Server) stop() error {
 
 	// Unset the address.
 	s.address = ""
-	return nil
 }
 
 // Reconfigure updates the listener with a new configuration.
@@ -113,6 +183,11 @@ func (s *Server) Reconfigure(address string) error {
 	// Locking.
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if s.restart != nil {
+		close(s.restart)
+		s.restart = nil
+	}
 
 	return s.reconfigure(address)
 }
@@ -126,10 +201,7 @@ func (s *Server) reconfigure(address string) error {
 	defer reverter.Fail()
 
 	// Stop the listener.
-	err := s.stop()
-	if err != nil {
-		return err
-	}
+	s.stop()
 
 	// Check if we should start.
 	if address != "" {
@@ -137,7 +209,7 @@ func (s *Server) reconfigure(address string) error {
 		reverter.Add(func() { _ = s.start(oldAddress) })
 
 		// Start the listener with the new address.
-		err = s.start(address)
+		err := s.start(address)
 		if err != nil {
 			return err
 		}
