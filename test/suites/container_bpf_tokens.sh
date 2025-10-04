@@ -51,16 +51,15 @@ test_container_bpf_token() {
     ensure_import_bpf_testimage
     ensure_has_localhost_remote "${INCUS_ADDR}"
 
-    incus launch testimage-bpf foo
+    incus init testimage-bpf foo
 
-    incus config set testimage-bpf \
+    incus config set foo \
       security.bpffs.delegate_cmds=? \
       security.bpffs.delegate_maps=? \
       security.bpffs.delegate_progs=? \
       security.bpffs.delegate_attachs=?
 
-    incus
-
+    incus start foo
 
     incus delete -f foo
 }
