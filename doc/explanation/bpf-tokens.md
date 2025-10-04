@@ -1,7 +1,8 @@
 (bpf-tokens)=
 # BPF token delegation
 
-Incus supports delegating BPF capabilities via [BPF tokens](https://docs.ebpf.io/linux/concepts/token/).
+Incus supports delegating BPF capabilities via [BPF tokens](https://docs.ebpf.io/linux/concepts/token/), introduced in Linux kernel 6.9.
+
 If any of the instance options {config:option}`instance-security:security.bpffs.delegate_cmds`,
 {config:option}`instance-security:security.bpffs.delegate_maps`,
 {config:option}`instance-security:security.bpffs.delegate_progs` or
