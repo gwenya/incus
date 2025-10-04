@@ -1,5 +1,5 @@
 make_and_import_bpf_testimage() {
-  pushd /tmp || return 1
+  old_dir="$(pwd)"
 
   bpftool_dir=/tmp/bpftool # use mktemp
   image_dir=/tmp/bpf-testimage # use mktemp
@@ -28,7 +28,7 @@ EOF
 
   incus image import "$image_file" --alias testimage-bpf
 
-  popd || return 1
+  cd "$old_dir" || return 1
   rm -rf "$image_dir" "$image_file" "$bpftool_dir"
 }
 
