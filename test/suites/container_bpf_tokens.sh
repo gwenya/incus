@@ -15,17 +15,14 @@ get_static_bpf_tool() {
 
 
 test_container_bpf_token() {
-  set -x
   ensure_import_testimage
 
   bpftool_path=$(get_static_bpf_tool)
 
   incus launch testimage foo
-  set -x
   incus file push "$bpftool_path" foo/bin/bpftool
-  set -x
   incus stop foo
-  set -x
+
   test_container_bpf_token_delegate
   test_container_bpf_token_path
 
@@ -39,7 +36,12 @@ test_container_bpf_token_delegate() {
       incus config set foo security.bpffs.delegate_progs=socket_filter,xdp,kprobe
       incus config set foo security.bpffs.delegate_attachs=cgroup_inet_ingress,sk_skb_stream_parser
 
+      incus start foo
+
       bpftool_output="$(incus exec foo -- /bin/bpftool --json token list  | jq --sort-keys)"
+
+      incus stop foo
+
       bpftool_desired_output='
   [
     {
@@ -78,7 +80,12 @@ test_container_bpf_token_path() {
       incus config unset foo security.bpffs.delegate_maps
       incus config unset foo security.bpffs.delegate_progs
 
+      incus start foo
+
       bpftool_output="$(incus exec foo -- bpftool --json token list  | jq --sort-keys)"
+
+      incus stop foo
+
       bpftool_desired_output='
   [
     {
