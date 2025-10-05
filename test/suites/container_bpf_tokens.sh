@@ -18,12 +18,16 @@ test_container_bpf_token() {
   ensure_import_testimage
 
   bpftool_path=$(get_static_bpf_tool)
-
+  file "$bpftool_path"
+  set -e
   incus launch testimage foo
+  set -e
   incus file push "$bpftool_path" foo/bin/bpftool
+  set -e
   incus exec foo -- chmod +x /bin/bpftool
+  set -e
   incus stop foo
-
+  set -e
   test_container_bpf_token_delegate
   test_container_bpf_token_path
 
