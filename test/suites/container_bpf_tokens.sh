@@ -55,35 +55,11 @@ bpf_token_test() {
   progs="$4"
   attachs="$5"
 
-  if [ "$path" != "" ]; then
-    incus config set foo security.bpffs.path="$path"
-  else
-    incus config unset foo security.bpffs.path || true
-  fi
-
-  if [ "$cmds" != "" ]; then
-    incus config set foo security.bpffs.delegate_cmds="$cmds"
-  else
-    incus config unset foo security.bpffs.delegate_cmds || true
-  fi
-
-  if [ "$maps" != "" ]; then
-    incus config set foo security.bpffs.delegate_maps="$maps"
-  else
-    incus config unset foo security.bpffs.delegate_maps || true
-  fi
-
-  if [ "$progs" != "" ]; then
-    incus config set foo security.bpffs.delegate_progs="$progs"
-  else
-    incus config unset foo security.bpffs.delegate_progs || true
-  fi
-
-  if [ "$attachs" != "" ]; then
-    incus config set foo security.bpffs.delegate_attachs="$attachs"
-  else
-    incus config unset foo security.bpffs.delegate_attachs || true
-  fi
+  incus config set foo security.bpffs.path="$path"
+  incus config set foo security.bpffs.delegate_cmds="$cmds"
+  incus config set foo security.bpffs.delegate_maps="$maps"
+  incus config set foo security.bpffs.delegate_progs="$progs"
+  incus config set foo security.bpffs.delegate_attachs="$attachs"
 
   incus start foo
   bpftool_output="$(incus exec foo -- /bin/bpftool --json token list  | jq --sort-keys)"
