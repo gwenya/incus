@@ -8,7 +8,7 @@ get_static_bpf_tool() {
 
     mkdir -p "$bpftool_dir"
 
-    git clone --depth=1 --branch=v7.6.0 --recurse-submodules https://github.com/libbpf/bpftool "$bpftool_dir"
+    git clone --depth=1 --revision=53c1852920c8a8f8ccedb7a64e3d9852949792c7 --recurse-submodules https://github.com/libbpf/bpftool "$bpftool_dir"
     cd "$bpftool_dir/src" || return 1
 
     EXTRA_LDFLAGS=-static make
