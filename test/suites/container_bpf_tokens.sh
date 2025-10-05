@@ -37,12 +37,25 @@ test_container_bpf_token() {
   incus exec foo -- chmod +x /bin/bpftool
   incus stop foo
 
+  echo "all delegates configured"
   bpf_token_test "" "map_create,prog_attach" "hash,array" "socket_filter,xdp,kprobe" "cgroup_inet_ingress,sk_skb_stream_parser"
+
+  echo "all delegates configured to any"
   bpf_token_test "" "any" "any" "any" "any"
+
+  echo "only delegate map"
   bpf_token_test "" "map_create" "" "" ""
+
+  echo "only delegate cmd"
   bpf_token_test "" "" "hash" "" ""
+
+  echo "only delegate prog"
   bpf_token_test "" "" "" "socket_filter" ""
+
+  echo "only delegate attach"
   bpf_token_test "" "" "" "" "cgroup_inet_ingress"
+
+  echo "custom mount path"
   bpf_token_test "/mnt" "map_create" "" "" ""
 
   incus delete -f foo
