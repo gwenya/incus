@@ -88,7 +88,7 @@ test_container_bpf_token_delegate() {
 
 test_container_bpf_token_path() {
   set -e
-  incus config set foo security.bpffs.path=/bpffs
+  incus config set foo security.bpffs.path=/mnt
   # we need to enable one of the delegate settings to enable the token
   set -e
   incus config set foo security.bpffs.delegate_cmds=map_create
@@ -102,7 +102,7 @@ test_container_bpf_token_path() {
   bpftool_desired_output='
   [
     {
-      "token_info": "/bpffs",
+      "token_info": "/mnt",
       "allowed_cmds": [
         "map_create"
       ],
