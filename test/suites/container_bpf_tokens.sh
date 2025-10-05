@@ -20,7 +20,9 @@ test_container_bpf_token() {
   bpftool_path=$(get_static_bpf_tool)
   file "$bpftool_path"
   set -e
+  echo "before launch"
   incus launch testimage foo
+  echo "after launch"
   set -e
   incus file push "$bpftool_path" foo/bin/bpftool
   set -e
