@@ -25,15 +25,10 @@ test_container_bpf_token() {
 
   bpftool_path=$(get_static_bpf_tool)
   file "$bpftool_path"
-  set -x
   incus launch testimage foo
-  set -x
   incus file push "$bpftool_path" foo/bin/bpftool
-  set -x
   incus exec foo -- chmod +x /bin/bpftool
-  set -x
   incus stop foo
-  set -x
   test_container_bpf_token_delegate
   test_container_bpf_token_path
 
@@ -42,19 +37,13 @@ test_container_bpf_token() {
 
 
 test_container_bpf_token_delegate() {
-  set -x
+  incus config unset foo security.bpffs.path
   incus config set foo security.bpffs.delegate_cmds=map_create,prog_attach
-  set -x
   incus config set foo security.bpffs.delegate_maps=hash,array
-  set -x
   incus config set foo security.bpffs.delegate_progs=socket_filter,xdp,kprobe
-  set -x
   incus config set foo security.bpffs.delegate_attachs=cgroup_inet_ingress,sk_skb_stream_parser
-  set -x
   incus start foo
-  set -x
   bpftool_output="$(incus exec foo -- /bin/bpftool --json token list  | jq --sort-keys)"
-  set -x
   incus stop foo
 
   bpftool_desired_output='
@@ -87,18 +76,22 @@ test_container_bpf_token_delegate() {
 }
 
 test_container_bpf_token_path() {
+  set -e
   incus config set foo security.bpffs.path=/bpffs
-
   # we need to enable one of the delegate settings to enable the token
+  set -e
   incus config set foo security.bpffs.delegate_cmds=map_create
+  set -e
   incus config unset foo security.bpffs.delegate_attachs
+  set -e
   incus config unset foo security.bpffs.delegate_maps
+  set -e
   incus config unset foo security.bpffs.delegate_progs
-
+  set -e
   incus start foo
-
+  set -e
   bpftool_output="$(incus exec foo -- bpftool --json token list  | jq --sort-keys)"
-
+  set -e
   incus stop foo
 
   bpftool_desired_output='
