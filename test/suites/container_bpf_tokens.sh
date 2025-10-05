@@ -3,7 +3,7 @@ get_static_bpf_tool() {
     echo "$INCUS_BPFTOOL_STATIC_BINARY"
   else
     archive_path=$(mktemp -p "${TEST_DIR}" bpftool-XXX.tar.xz)
-    unpack_path=$(mktemp -p "${TEST_DIR}" bpftool-XXX)
+    unpack_path=$(mktemp -p -d "${TEST_DIR}" bpftool-XXX)
 
     curl -L -o "$archive_path" https://github.com/libbpf/bpftool/releases/download/v7.6.0/bpftool-v7.6.0-amd64.tar.gz
 
