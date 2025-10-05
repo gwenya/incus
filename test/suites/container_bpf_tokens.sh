@@ -6,10 +6,10 @@ ensure_import_bpf_testimage() {
       else
         old_dir="$(pwd)"
 
-        bpftool_dir=/tmp/bpftool # use mktemp
-        image_dir=/tmp/bpf-testimage # use mktemp
-        image_file=/tmp/bpf-testimage.tar.xz # use mktemp
-        testimage_file=/tmp/testimage # use mktemp
+        bpftool_dir=$(mktemp -d -p "${TEST_DIR}" bpftool-XXX)
+        image_dir=$(mktemp -d -p "${TEST_DIR}" bpf-testimage-XXX)
+        image_file=$(mktemp -p "${TEST_DIR}" bpf-testimage-XXX.tar.xz)
+        testimage_file=$(mktemp -p "${TEST_DIR}" testimage-XXX)
 
         mkdir -p "$bpftool_dir" "$image_dir"
 
@@ -18,7 +18,7 @@ ensure_import_bpf_testimage() {
 
         tar xf "$testimage_file" -C "$image_dir"
 
-        git clone --depth=1 --recurse-submodules https://github.com/libbpf/bpftool "$bpftool_dir"
+        git clone --depth=1 --branch=v7.6.0 --recurse-submodules https://github.com/libbpf/bpftool "$bpftool_dir"
         cd "$bpftool_dir/src" || return 1
 
         EXTRA_LDFLAGS=-static make
@@ -49,7 +49,6 @@ EOF
 
 test_container_bpf_token() {
     ensure_import_bpf_testimage
-    ensure_has_localhost_remote "${INCUS_ADDR}"
 
     incus init testimage-bpf foo
 
