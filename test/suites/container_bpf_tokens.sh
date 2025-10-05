@@ -49,7 +49,6 @@ test_container_bpf_token() {
 }
 
 bpf_token_test() {
-  set -x
   path="$1"
   cmds="$2"
   maps="$3"
@@ -58,50 +57,37 @@ bpf_token_test() {
 
   if [ "$path" != "" ]; then
     incus config set foo security.bpffs.path="$path"
-    set -x
   else
     incus config unset foo security.bpffs.path || true
-    set -x
   fi
 
   if [ "$cmds" != "" ]; then
     incus config set foo security.bpffs.delegate_cmds="$cmds"
-    set -x
   else
     incus config unset foo security.bpffs.delegate_cmds || true
-    set -x
   fi
 
   if [ "$maps" != "" ]; then
     incus config set foo security.bpffs.delegate_maps="$maps"
-    set -x
   else
     incus config unset foo security.bpffs.delegate_maps || true
-    set -x
   fi
 
   if [ "$progs" != "" ]; then
     incus config set foo security.bpffs.delegate_progs="$progs"
-    set -x
   else
     incus config unset foo security.bpffs.delegate_progs || true
-    set -x
   fi
 
   if [ "$attachs" != "" ]; then
     incus config set foo security.bpffs.delegate_attachs="$attachs"
-    set -x
   else
     incus config unset foo security.bpffs.delegate_attachs || true
-    set -x
   fi
 
   incus start foo
-  set -x
   bpftool_output="$(incus exec foo -- /bin/bpftool --json token list  | jq --sort-keys)"
-  set -x
   incus stop foo
-  set -x
   expected_path="${path:-/sys/fs/bpf}"
   expected_cmds="$(echo "$cmds" | tr ',' '\n' | sort)"
   expected_maps="$(echo "$maps" | tr ',' '\n' | sort)"
