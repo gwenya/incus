@@ -21,9 +21,11 @@ test_container_bpf_token() {
   bpftool_path=$(get_static_bpf_tool)
 
   incus launch testimage foo
+  set -x
   incus file push "$bpftool_path" foo/bin/bpftool
+  set -x
   incus stop foo
-
+  set -x
   test_container_bpf_token_delegate
   test_container_bpf_token_path
 
