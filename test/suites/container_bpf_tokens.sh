@@ -108,7 +108,7 @@ bpf_token_test() {
   expected_progs="$(echo "$progs" | tr ',' '\n' | sort)"
   expected_attachs="$(echo "$attachs" | tr ',' '\n' | sort)"
 
-  got_path="$(echo "$bpftool_output" | jq '.[0].token_info')"
+  got_path="$(echo "$bpftool_output" | jq -r '.[0].token_info')"
   got_cmds="$(echo "$bpftool_output" | jq -r '.[0].allowed_cmds.[]' | sort)"
   got_maps="$(echo "$bpftool_output" | jq -r '.[0].allowed_maps.[]' | sort)"
   got_progs="$(echo "$bpftool_output" | jq -r '.[0].allowed_progs.[]' | sort)"
