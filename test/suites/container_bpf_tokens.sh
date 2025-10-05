@@ -2,14 +2,20 @@ get_static_bpf_tool() {
   if [ -e "${INCUS_BPFTOOL_STATIC_BINARY:-}" ]; then
     echo "$INCUS_BPFTOOL_STATIC_BINARY"
   else
-    archive_path=$(mktemp -p "${TEST_DIR}" bpftool-XXX.tar.xz)
-    unpack_path=$(mktemp -d -p "${TEST_DIR}" bpftool-XXX)
+    old_dir="$(pwd)"
 
-    curl -L -o "$archive_path" https://github.com/libbpf/bpftool/releases/download/v7.6.0/bpftool-v7.6.0-amd64.tar.gz
+    bpftool_dir=$(mktemp -d -p "${TEST_DIR}" bpftool-XXX)
 
-    tar xf "$archive_path" -C "$unpack_path"
+    mkdir -p "$bpftool_dir"
 
-    echo "$unpack_path/bpftool"
+    git clone --depth=1 --branch=v7.6.0 --recurse-submodules https://github.com/libbpf/bpftool "$bpftool_dir"
+    cd "$bpftool_dir/src" || return 1
+
+    EXTRA_LDFLAGS=-static make
+
+    realpath bpftool
+
+    cd "$old_dir" || return 1
   fi
 }
 
