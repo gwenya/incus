@@ -60,7 +60,7 @@ bpf_token_test() {
     incus config set foo security.bpffs.path="$path"
     set -x
   else
-    incus config unset security.bpffs.path || true
+    incus config unset foo security.bpffs.path || true
     set -x
   fi
 
@@ -68,7 +68,7 @@ bpf_token_test() {
     incus config set foo security.bpffs.delegate_cmds="$cmds"
     set -x
   else
-    incus config unset security.bpffs.delegate_cmds || true
+    incus config unset foo security.bpffs.delegate_cmds || true
     set -x
   fi
 
@@ -76,7 +76,7 @@ bpf_token_test() {
     incus config set foo security.bpffs.delegate_maps="$maps"
     set -x
   else
-    incus config unset security.bpffs.delegate_maps || true
+    incus config unset foo security.bpffs.delegate_maps || true
     set -x
   fi
 
@@ -84,7 +84,7 @@ bpf_token_test() {
     incus config set foo security.bpffs.delegate_progs="$progs"
     set -x
   else
-    incus config unset security.bpffs.delegate_progs || true
+    incus config unset foo security.bpffs.delegate_progs || true
     set -x
   fi
 
@@ -92,7 +92,7 @@ bpf_token_test() {
     incus config set foo security.bpffs.delegate_attachs="$attachs"
     set -x
   else
-    incus config unset security.bpffs.delegate_attachs || true
+    incus config unset foo security.bpffs.delegate_attachs || true
     set -x
   fi
 
