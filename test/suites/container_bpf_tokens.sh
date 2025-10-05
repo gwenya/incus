@@ -21,6 +21,7 @@ test_container_bpf_token() {
 
   incus launch testimage foo
   incus file push "$bpftool_path" foo/bin/bpftool
+  incus exec foo -- chmod +x /bin/bpftool
   incus stop foo
 
   test_container_bpf_token_delegate
