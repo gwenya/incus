@@ -15,6 +15,7 @@ get_static_bpf_tool() {
 
 
 test_container_bpf_token() {
+  set -x
   ensure_import_testimage
 
   bpftool_path=$(get_static_bpf_tool)
