@@ -1,9 +1,9 @@
 ensure_import_bpf_testimage() {
-  ensure_import_testimage
   if ! incus image alias list | grep -q "^| testimage-bpf\\s*|.*$"; then
       if [ -e "${INCUS_BPF_TEST_IMAGE:-}" ]; then
           incus image import "${INCUS_BPF_TEST_IMAGE}" --alias testimage-bpf
       else
+        ensure_import_testimage
         old_dir="$(pwd)"
 
         bpftool_dir=$(mktemp -d -p "${TEST_DIR}" bpftool-XXX)
@@ -50,15 +50,40 @@ EOF
 test_container_bpf_token() {
     ensure_import_bpf_testimage
 
-    incus init testimage-bpf foo
+    incus launch testimage-bpf foo \
+      security.bpffs.delegate_cmds=map_create,prog_attach \
+      security.bpffs.delegate_maps=hash,array \
+      security.bpffs.delegate_progs=socket_filter,xdp,kprobe \
+      security.bpffs.delegate_attachs=cgroup_inet_ingress,sk_skb_stream_parser
 
-    incus config set foo \
-      security.bpffs.delegate_cmds=? \
-      security.bpffs.delegate_maps=? \
-      security.bpffs.delegate_progs=? \
-      security.bpffs.delegate_attachs=?
+    bpftool_output="$(incus exec foo -- bpftool --json token list  | jq --sort-keys)"
+    bpftool_desired_output='
+[
+  {
+    "token_info": "/sys/fs/bpf",
+    "allowed_cmds": [
+      "map_create",
+      "prog_attach"
+    ],
+    "allowed_maps": [
+      "hash",
+      "array"
+    ],
+    "allowed_progs": [
+      "socket_filter",
+      "kprobe",
+      "xdp"
+    ],
+    "allowed_attachs": [
+      "cgroup_inet_ingress",
+      "sk_skb_stream_parser"
+    ]
+  }
+]
+    '
+    bpftool_desired_output=$(echo "$bpftool_desired_output" | jq --sort-keys)
 
-    incus start foo
+    diff <(echo "$bpftool_output") <(echo "$bpftool_desired_output") > /dev/null
 
     incus delete -f foo
 }
