@@ -17,11 +17,11 @@ get_static_bpf_tool() {
 test_container_bpf_token() {
   ensure_import_testimage
 
-  incus init testimage foo
-
   bpftool_path=$(get_static_bpf_tool)
 
+  incus launch testimage foo
   incus file push "$bpftool_path" foo/bin/bpftool
+  incus stop foo
 
   test_container_bpf_token_delegate
   test_container_bpf_token_path
